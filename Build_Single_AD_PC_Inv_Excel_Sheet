@@ -1,0 +1,88 @@
+#Note: This Script is Built Relying On A Windows Logon and Logoff Script to Generate PC Name
+#Note: Logon Script Single (Referance for Line 19) - *Username* logged ON *Computer* @ 10:53:19.41 Tue 05/21/2019 
+#Update: \\*ServerName*\ For Your Server Name
+
+Import-Module ActiveDirectory
+Write-Host "|========================================|"
+Write-Host "Note: Enter Part of the Username followed by *"
+$UsrCheck = read-host 'Username*'
+Write-Host "|========================================|"
+Get-ADUser -Filter * | where { $_.SamAccountName -like "$UsrCheck" } | Format-Table SamAccountName,GivenName,Surname
+$UserName = read-host 'Enter Users SamAccountName'
+Write-Host "|========================================|"
+Write-Host "Checking for Users Login Log in \\*ServerName*\TimeLog_User\"
+if (Test-Path \\*ServerName*\TimeLog_User\$Username.txt) { "Users Login File Found" }
+if ( -not (Test-Path \\*ServerName*\TimeLog_User\$Username.txt) ) { "!!Users Login File Not Found!!" }
+Write-Host "|========================================|"
+#Output - Users last logged into *Computer Name*
+# Note: This will come from the login folder 
+$UsersPC = Get-Content -Path \\*ServerName*\TimeLog_User\$Username.txt -Tail 1| ForEach-Object { $_.Split(' ')[3] }
+Write-Host "User Last Logged into: " $UsersPC
+Write-Host "|========================================|"
+Write-Host "Building Software List for User"$UserName "On PC"$UsersPC
+Write-Host "|========================================|"
+
+$Model = Get-CimInstance ` -ComputerName $UsersPC -Class Win32_computerSystem 
+$Processor = Get-CimInstance ` -ComputerName $UsersPC -Class Win32_processor
+$SerialNumber = Get-CimInstance ` -ComputerName $UsersPC -Class Win32_bios
+$OperatingSystem = Get-CimInstance ` -ComputerName $UsersPC -Class Win32_OperatingSystem 
+
+#Create a new Excel object using COM
+$Excel = New-Object -ComObject Excel.Application
+$Excel.visible = $True
+$Excel.SheetsInNewWorkbook = @(Get-Content -Path \\*ServerName*\TimeLog_User\$Username.txt -Tail 1| ForEach-Object { $_.Split(' ')[3] }).count
+
+#Counter variable for rows
+$i = 1
+
+    $Excel = $Excel.Workbooks.Add()
+    $Sheet = $Excel.Worksheets.Item($i++)
+    $Sheet.Name = $UsersPC
+
+    $intRow = 1
+         #Create column headers
+         $Sheet.Cells.Item($intRow,1) = "Name"
+         $Sheet.Cells.Item($intRow,2) = "Model"
+         $Sheet.Cells.Item($intRow,3) = "Serial Number"
+         $Sheet.Cells.Item($intRow,4) = "OS"
+         $Sheet.Cells.Item($intRow,5) = "Memory Capacity(GB)"
+         $Sheet.Cells.Item($intRow,6) = "CPU Type"
+         #Format the column headers
+             for ($col = 1; $col –le 6; $col++)
+             {
+                  $Sheet.Cells.Item($intRow,$col).Font.Bold = $True
+                  $Sheet.Cells.Item($intRow,$col).Interior.ColorIndex = 16
+                  $Sheet.Cells.Item($intRow,$col).Font.ColorIndex = 4
+             }
+    $intRow++
+foreach ($objItem in $Model){
+                $Sheet.Cells.Item($intRow,1) = $objItem.Name
+                $Sheet.Cells.Item($intRow,2) = $objItem.Model
+                $Sheet.Cells.Item($intRow,5) = $objItem.TotalPhysicalMemory/1GB
+             }
+foreach ($objItem in $SerialNumber){
+                $Sheet.Cells.Item($intRow,3) = $objItem.SerialNumber
+             }
+foreach ($objItem in $OperatingSystem){
+                $Sheet.Cells.Item($intRow,4) = $objItem.caption
+             }
+foreach ($objItem in $Processor){
+                $Sheet.Cells.Item($intRow,6) = $objItem.Name
+             }
+     $intRow++
+         $Sheet.Cells.Item($intRow,1) = "APPLICATION"
+         $Sheet.Cells.Item($intRow,2) = "VERSION"
+             #Format the column headers
+             for ($col = 1; $col –le 2; $col++)
+             {
+                  $Sheet.Cells.Item($intRow,$col).Font.Bold = $True
+                  $Sheet.Cells.Item($intRow,$col).Interior.ColorIndex = 16
+                  $Sheet.Cells.Item($intRow,$col).Font.ColorIndex = 4
+             }
+     $intRow++
+             foreach ($objItem in $software){
+                $Sheet.Cells.Item($intRow, 1) = $objItem.Name
+                $Sheet.Cells.Item($intRow, 2) = $objItem.Version
+     $intRow ++
+             }
+$Sheet.UsedRange.EntireColumn.AutoFit()
