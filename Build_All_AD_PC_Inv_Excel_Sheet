@@ -1,0 +1,62 @@
+#Note: Update Line 4 *Domain* for your given Domain
+
+Import-Module ActiveDirectory
+Get-ADComputer -filter * -SearchBase "CN=Computers,DC=*Domain*,DC=local" | Select-Object -ExpandProperty Name | Sort-Object | Set-Content C:\temp\AD_Computer_Names.txt
+$input ="C:\temp\AD_Computer_Names.txt"
+$Model = Get-CimInstance ` -ComputerName (Get-Content $input) -Class Win32_computerSystem 
+$Processor = Get-CimInstance ` -ComputerName (Get-Content $input) -Class Win32_processor
+$SerialNumber = Get-CimInstance ` -ComputerName (Get-Content $input) -Class Win32_bios
+$OperatingSystem = Get-CimInstance ` -ComputerName (Get-Content $input) -Class Win32_OperatingSystem 
+$Excel = New-Object -ComObject Excel.Application
+$Excel.visible = $True
+$i = 1
+    $Excel = $Excel.Workbooks.Add()
+    $Sheet = $Excel.Worksheets.Item($i++)
+    $Sheet.Name = "Computer_Info"
+
+    $intRow = 0
+         $intRow++
+#Names for Column  
+         $Sheet.Cells.Item($intRow,1) = "Name"
+         $Sheet.Cells.Item($intRow,2) = "Model"
+         $Sheet.Cells.Item($intRow,3) = "Serial Number"
+         $Sheet.Cells.Item($intRow,4) = "OS"
+         $Sheet.Cells.Item($intRow,5) = "Memory Capacity(GB)"
+         $Sheet.Cells.Item($intRow,6) = "CPU Type"
+
+#Format the column headers
+                for ($col = 1; $col –le 6; $col++)
+                {
+                     $Sheet.Cells.Item($intRow,$col).Font.Bold = $True
+                     $Sheet.Cells.Item($intRow,$col).Interior.ColorIndex = 16
+                     $Sheet.Cells.Item($intRow,$col).Font.ColorIndex = 4
+                }
+   $intRow++
+foreach ($objItem in $Model){
+                $Sheet.Cells.Item($intRow,1) = $objItem.Name
+                $Sheet.Cells.Item($intRow,2) = $objItem.Model
+                $Sheet.Cells.Item($intRow,5) = $objItem.TotalPhysicalMemory/1GB
+                   $intRow ++
+             }
+#Resetting the Value of $intRow to 2 
+       $intRow = 2
+foreach ($objItem in $SerialNumber){
+                $Sheet.Cells.Item($intRow,3) = $objItem.SerialNumber
+                   $intRow ++
+             }
+#Resetting the Value of $intRow to 2 
+       $intRow = 2
+#Gets the OperatingSystem Information
+foreach ($objItem in $OperatingSystem){
+                $Sheet.Cells.Item($intRow,4) = $objItem.caption
+                    $intRow ++
+             }
+#Resetting the Value of $intRow to 2 
+        $intRow = 2
+#Gets the CPU Information
+foreach ($objItem in $Processor){
+                $Sheet.Cells.Item($intRow,6) = $objItem.Name
+                    $intRow ++
+             }
+#Expands Cells in Excel for Text Formating
+$Sheet.UsedRange.EntireColumn.AutoFit()
