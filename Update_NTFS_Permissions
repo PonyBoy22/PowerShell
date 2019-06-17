@@ -1,0 +1,40 @@
+# Note Run Install-Module -Name NTFSSecurity FIRST FOR THIS TO WORK
+# Target Server
+# Update Below Line (4) with Target Server Name 
+$Server = "Testbox"
+    Write-Host -ForegroundColor Magenta "-------------------------------------------"
+    Write-Host -ForegroundColor Green "Scope: Update C:\users Desktop and Documents"
+    Write-Host -ForegroundColor Green "Note: Created To Run on WinSrv2016"
+    Write-Host -ForegroundColor Magenta "-------------------------------------------"
+    Write-Host -ForegroundColor Green "Building List Of Users"
+# Run the below string on the server to build a list of users
+# Note: Remove the Admin Users From List  
+        ##dir \\$Server\C$\Users | select Name | Export-Csv -Path \\$Server\C$\users\$env:USERNAME\Users.csv -NoTypeInformation
+        $list=Test-Path \\$Server\C$\users\$env:USERNAME\Users.csv
+    Write-Host -ForegroundColor Magenta "-------------------------------------------"
+    Write-Host -ForegroundColor Yellow "Updating Files - Started"
+        if ($list) {
+            Import-CSV -Path \\$Server\C$\users\$env:USERNAME\Users.csv -Header "Name" | foreach {
+                    $Desktop_folder = ("\\$Server\C$\Users\$($_.Name)\Desktop\")
+                    $Documents_folder = ("\\$Server\C$\Users\$($_.Name)\Documents\")           
+# Updates C:\users\*Username*\Desktop
+# Disabling Inheritance on Users Desktop Folder
+                        Disable-NTFSAccessInheritance –path $Desktop_folder -Verbose
+# Removing Full Access From Users Desktop Folder
+                        Remove-NTFSAccess $Desktop_folder -Account $($_.Name) -AccessRights FullControl -Verbose
+# Adding ReadandExecute & Synchronize to Users Desktop Folder
+                        Add-NTFSAccess $Desktop_folder -Account $($_.Name) -AccessRights ReadandExecute, Synchronize -Verbose
+    Write-Host -ForegroundColor Magenta "-------------------------------------------"
+    Write-Host -ForegroundColor Magenta "-------------------------------------------"
+# Updates C:\Users\*Username*\Documents Folder
+# Disabling Inheritance on Users Document Folder
+                        Disable-NTFSAccessInheritance –path $Documents_Folder -Verbose
+# Removing Full Access From Users Desktop Folder
+                        Remove-NTFSAccess $Documents_Folder -Account $($_.Name) -AccessRights FullControl -Verbose
+# Adding ReadandExecute & Synchronize to Users Desktop Folder
+                        Add-NTFSAccess $Documents_Folder -Account $($_.Name) -AccessRights ReadandExecute, Synchronize -Verbose
+    Write-Host -ForegroundColor Magenta "-------------------------------------------"
+            }
+        }
+    Write-Host -ForegroundColor Yellow "Updating Files - Completed"
+    Write-Host -ForegroundColor Magenta "-------------------------------------------"
