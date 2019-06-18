@@ -1,0 +1,39 @@
+# This Script is Built Using Login and Logoff Files
+# Moving Files From Users Current PC To New PC 
+# Find What PC a User is On 
+Import-Module ActiveDirectory
+Write-Host "|========================================|"
+Write-Host "Note: Enter Part of the Username followed by *"
+$UsrCheck = read-host 'Username*'
+Write-Host "|========================================|"
+Get-ADUser -Filter * | where { $_.SamAccountName -like "$UsrCheck" } | Format-Table SamAccountName,GivenName,Surname
+$UserName = read-host 'Enter Users SamAccountName'
+Write-Host "|========================================|"
+Write-Host "Checking for Users Login Log in \\*Server*\TimeLog_User\"
+if (Test-Path \\*Server*\TimeLog_User\$Username.txt) { "Users Login File Found" }
+if ( -not (Test-Path \\*Server*\TimeLog_User\$Username.txt) ) { "!!Users Login File Not Found!!" }
+Write-Host "|========================================|"
+#Output - Users last logged into *Computer Name*
+# Note: This will come from the login folder 
+$Users_Old_PC = Get-Content -Path \\*Server*\TimeLog_User\$Username.txt -Tail 1| ForEach-Object { $_.Split(' ')[3] }
+Write-Host "User Last Logged into: " $Users_Old_PC
+Write-Host "|========================================|"
+# Enter Name/IP of New PC
+Write-Host "If the computer is added to AD Use PC Name"
+Write-Host "If the computer is not in AD Use IP"  
+Write-Host "Enter The Name/IP of the users new PC"
+$Users_New_PC = read-host 'New PC Name'
+# Test Connectiong to New PC 
+Test-Connection $Users_New_PC
+# Check New PC for Username Used in Part one
+# If User Name is not found Move Desktop and Documents to Public Desktop 
+if (Test-Path "\\$Users_New_PC\C$\Users\$UserName")
+{
+    RoboCopy \\$Users_Old_PC\C$\Users\$UserName\Desktop \\$Users_New_PC\c$\Users\$UserName\Desktop\Desktop *.* /E /XJ
+    Robocopy \\$Users_Old_PC\C$\Users\$UserName\Documents\ \\$Users_New_PC\C$\Users\$UserName\Desktop\Documents *.* /E /XJ
+}
+else
+{
+    RoboCopy \\$Users_Old_PC\C$\Users\$UserName\Desktop \\$Users_New_PC\c$\Users\Public\Desktop\Desktop *.* /E /XJ
+    Robocopy \\$Users_Old_PC\C$\Users\$UserName\Documents\ \\$Users_New_PC\C$\Users\Public\Desktop\Documents *.* /E /XJ
+}
