@@ -1,0 +1,8 @@
+#Change this to path of where file is at
+  $list=Test-Path C:\Temp\Windows10_PC_List1.csv
+  if ($list) {
+            Import-CSV -Path C:\Temp\Windows10_PC_List1.csv -Header "Name" | foreach {
+                    # Update with Source Folder 
+                    robocopy '\\*PC*\c$\apps\*Folder*' \\$($_.Name)\c$\apps\*Folder* *.* /e
+            }
+        }
