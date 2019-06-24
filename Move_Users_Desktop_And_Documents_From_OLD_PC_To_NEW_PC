@@ -29,11 +29,11 @@ Test-Connection $Users_New_PC
 # If User Name is not found Move Desktop and Documents to Public Desktop 
 if (Test-Path "\\$Users_New_PC\C$\Users\$UserName")
 {
-    RoboCopy \\$Users_Old_PC\C$\Users\$UserName\Desktop \\$Users_New_PC\c$\Users\$UserName\Desktop\Desktop *.* /E /XJ
-    Robocopy \\$Users_Old_PC\C$\Users\$UserName\Documents\ \\$Users_New_PC\C$\Users\$UserName\Desktop\Documents *.* /E /XJ
+    RoboCopy \\$Users_Old_PC\C$\Users\$UserName\Desktop \\$Users_New_PC\c$\Users\$UserName\Desktop\$UserName\Desktop *.* /E /XJ
+    Robocopy \\$Users_Old_PC\C$\Users\$UserName\Documents\ \\$Users_New_PC\C$\Users\$UserName\Desktop\$UserName\Documents *.* /E /XJ
 }
 else
 {
-    RoboCopy \\$Users_Old_PC\C$\Users\$UserName\Desktop \\$Users_New_PC\c$\Users\Public\Desktop\Desktop *.* /E /XJ
-    Robocopy \\$Users_Old_PC\C$\Users\$UserName\Documents\ \\$Users_New_PC\C$\Users\Public\Desktop\Documents *.* /E /XJ
+    RoboCopy \\$Users_Old_PC\C$\Users\$UserName\Desktop \\$Users_New_PC\c$\Users\Public\Desktop\$UserName\Desktop *.* /E /XJ
+    Robocopy \\$Users_Old_PC\C$\Users\$UserName\Documents\ \\$Users_New_PC\C$\Users\Public\Desktop\$UserName\Documents *.* /E /XJ
 }
