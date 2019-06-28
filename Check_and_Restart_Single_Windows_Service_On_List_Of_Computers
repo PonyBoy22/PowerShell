@@ -1,0 +1,14 @@
+# What Does it Do: Script for Checking/Resting a single Windows Service "WinMGMT" from alist of Machines
+# What You Need to Update: Line 4 $Server_List with target servers
+# What You Need to Update: Line 8 $Service with target service
+$Server_List = "Server1", "Server2", "Server3";
+
+foreach ($Server in $Server_List) {
+    Invoke-Command -ComputerName $Server -scriptblock {
+    $Service = "Winmgmt" #Update With Service You Would like to Manage
+            Get-Service $Service 
+            Restart-Service $Service -force -verbose 
+            Get-Service $Service
+        Write-Host -Foregroundcolor Magenta "-------------------------------------------------"
+        }
+    }
